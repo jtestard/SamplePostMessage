@@ -1,28 +1,33 @@
 package com.example.samplepostmessage
 
-import android.content.Context
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.webkit.JavascriptInterface
 import android.webkit.WebMessage
 import android.webkit.WebView
 import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import java.time.Instant
 
 
 class MainActivity : AppCompatActivity() {
+
+    private lateinit var myButton: Button
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val myButton: Button = findViewById(R.id.button)
+        myButton = findViewById(R.id.button)
 
         val myWebView: WebView = findViewById(R.id.webview)
 
         myWebView.settings.javaScriptEnabled = true
 
-        myWebView.addJavascriptInterface(WebAppInterface(this), "Android")
+        myWebView.addJavascriptInterface(this, "Android")
         myWebView.loadUrl("https://www.google.com")
 
         /*
@@ -49,7 +54,7 @@ class MainActivity : AppCompatActivity() {
                     "            window.addEventListener(\n" +
                     "              \"message\",\n" +
                     "              (event) => {\n" +
-                    "                Android.showToast(event.data)\n" +
+                    "                Android.updateButton(event.data)\n" +
                     "              },\n" +
                     "              false\n" +
                     "            );\n" +
@@ -65,20 +70,23 @@ class MainActivity : AppCompatActivity() {
 
 
         myButton.setOnClickListener {
-            myWebView.postWebMessage(WebMessage("Coucou !"), Uri.EMPTY)
+            myWebView.postWebMessage(WebMessage("${Instant.now().nano}"), Uri.EMPTY)
         }
     }
-
-}
-
-class WebAppInterface(
-    private val mContext: Context
-) {
 
     /** Show a toast from the web page  */
     @JavascriptInterface
     fun showToast(toast: String) {
-        Toast.makeText(mContext, toast, Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, toast, Toast.LENGTH_SHORT).show()
+    }
+
+    /** Show a toast from the web page  */
+    @JavascriptInterface
+    fun updateButton(message: String) {
+        val diff = Instant.now().nano - Integer.parseInt(message)
+        myButton.text = "${diff.div(1000000f)}"
+        Log.w("MainActivity", "${myButton.text}")
     }
 }
+
 
